@@ -1,0 +1,213 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Reinforcement Learning}
+\begin{comment}
+	RL handles the case where we don't know the underlying MDP, e.g. we don't know the rewards and probabilities of the actions.\\
+	\textbf{Goal:} Learn the mapping from actions (or a sequence of actions) to rewards and thus the MDP.\\
+	\textbf{Credit assignment problem:} An agent must assign rewards to actions in a certain state. Which actions got me the largest reward?
+\end{comment}
+
+\textbf{Goal:} max. discounted rewards $\sum^\infty \gamma^t r(X_t, A_t)$
+\textbf{Data:} $\tau^{(i)} = (x_0^{(i)}, a_0^{(i)}, r_0^{(i)}, x_1^{(i)}, a_1^{(i)}, r_1^{(i)},..), D=\{ x_j^{(i)}, a_j^{(i)}, r_j^{(i)}, x_{j+1}^{(i)} \}$\\
+\begin{comment}
+	Compared to supervised learning, the data is not i.i.d. and the dataset is not fixed, e.g. we generate it by interacting with our environment.\\
+	\textbf{Episodic:} Creates multiple trajectories, resetting the agent.\\
+\end{comment}
+\textbf{Dilemma:} Explore or Exploit?\\
+\begin{comment}
+	Explore and gather more data to avoid missing out on a potentially large reward, or exploit and optimize the current policy ?\\
+\end{comment}
+
+\textbf{On-policy:} Agent takes actions following a policy $\pi$\\
+\textbf{Off-policy:} No specific policy is followed to learn\\
+\begin{comment}
+	In on-policy learning, the agent follows the current policy when creating further trajectories.\\
+	In off-policy learning, the agent uses trajectories to learn that are not following a specific policy, f.e. random actions, greedy max actions.\\
+\end{comment}
+
+\textbf{Model-based:} Estimate MDP ($P(x'|x,a)$, $r(x,a)$), optimize policy based on MDP\\
+\begin{comment}
+	Collect data and learn the transition probabilities and rewards.
+	From there, use the standard methods to estimate the policy.\\
+\end{comment}
+\textbf{Model-free:} Estimate V directly (Policy gradient, AC)\\
+\begin{comment}
+	Learn the value function directly, since the optimal policy is greedy with respect to the value function, it is enough to know the value function to determine the optimal policy.\\
+\end{comment}
+
+\subsection{Model-based RL}
+\textbf{Estimates:} Transition probabilities and reward function\\
+$\hat{p}(X_{t+1} | X_t, A) = \frac{Count(X_{t+1}, X_t, A)}{Count(X_t, A)}, 
+\hat{r}(x,a) = \frac{1}{N_{x,a}} \sum R(x,a)$\\
+\begin{comment}
+	The problem reduces to estimating the transition probabilities and reward function (MLE in this example).
+	As dataset, we can use the single transitions from the trajectories, since even if the trajectory itself is not independent, the transitions are.\\
+	\textbf{Supervised learning:} In this setting, we can use all the techniques from supervised learning to estimate the two functions. The input are state-action pairs, the labels are next state and reward.\\
+	\textbf{Exploration vs. Exploitation:} We can always pick a random action, then we eventually learn the correct probabilities and rewards. It may take very long though.\\
+	If we always pick the best action according to the current knowledge, we might see quick results, but get stuck with suboptimal actions.\\ 
+	\textbf{Note:} The important distinction is that how often we observe certain state-space pairs depends on what we do. So the distribution of the inputs depends on out policy.\\
+\end{comment}
+
+\textbf{$\epsilon_t$-greedy:} Pick random or best action, $\sum \epsilon = \infty, \sum \epsilon^2 < \infty$\\
+\begin{comment}
+	If $\epsilon$ satisfies the conditions, it converges, but can take some time to eliminate clearly suboptimal actions\\
+\end{comment}
+
+\textbf{R$_{max}$:} \\
+\begin{comment}
+	How can we model optimism for our estimated MDP's?\\
+	If you don't know r and p, we introduce a fairy tale state $P(x^*|x,y) = 1$, $r(x^*, a) = R_{max}$. We set $r(x,a) = R_{max}$ and $P(x^*|x,a)$ for all states x and actions a.\\
+	The algorithm keeps track of how many times we visited certain state-action pairs.\\
+	We then use the initial policy $\pi$ and update $r(x,a)$ and $p(x'|x,a)$ for every transition that occured. If we observed enough transitions, we recompute policy $\pi$ and do it all over again.\\
+	\textbf{How many samples?} Using Hoeffinger bound, if samples are i.i.d. with mean $\mu$ and bounded in $[0,C]$, we have error estimate $P(|\mu - \frac{1}{n}\sum_i^n Z_i| > \epsilon) \leq 2 \exp(-2 n \epsilon^2 / C^2)$\\
+	F.e. $P(|\hat{r}(x,a) - r(x,a)| > \epsilon) \leq 2 \exp(-2 n_{x,a} \epsilon^2 / R^2_{max}) = \delta$, then $n_{x,a} \in O(\frac{R_{max}^2}{\epsilon^2} \log \frac{1}{\delta})$\\
+\end{comment}
+
+\textbf{Hoefding:} $P(|\mu - \frac{1}{n}\sum_i^n Z_i| > \epsilon) \leq 2 \exp(-2 n \epsilon^2 / C^2) = \delta, \\
+Z \in [0,C]$\\
+$P(|\hat{r}(x,a) - r(x,a)| \leq \epsilon) \geq 1-\delta$, then $n_{x,a} \in O(\frac{R_{max}^2}{\epsilon^2} \log \frac{1}{\delta})$\\
+\begin{comment}
+	The bound tells us how many samples we need to be under a certain error threshold.
+	$R_{max}$ bounds the value of Z, as required.\\
+\end{comment}
+
+\textbf{Performance:} w/ prob. $1-\delta$, $\epsilon-$optimal policy in \# steps polynomial in $|X|,|A|, T, 1/\epsilon, \log(1/\delta)$ and $R_{max}$.\\
+\begin{comment}
+	We do have a guarantee that after a certain amount of steps the algo makes progression, e.g. visits an unknown state-action pair or obtains near optimal rewards.\\
+	\textbf{Demo:} The testing value is showing the results we would get by following the estimated policy.\\
+	The Exploration value shows the results when we would act after the current policy (greedy, $\epsilon-$greedy,...)\\
+	\textbf{Greedy Policy:} Oscilates between two states, because it detects that going in one direction eventually leads to bumping into a wall, and thus want's to go back immediatly.\\
+	\textbf{Random:} Quickly saw all states and rewards, like a random walk. The Exploitation value of this policy is really bad, since we always place random actions. Actions and state that are far away may take long to be explored.\\
+	\textbf{$\epsilon-$greedy:} Takes a little longer until all states are visited, but the exploitation value is much better, it concentrates much more on good states.\\
+	\textbf{R$_{max}$:} Needs some iterations until it has enough samples, then decreases the estimated values accordingly.\\
+\end{comment}
+
+\textbf{Memory:} $\hat{p}(x' | x, a)$ ($O(|A||X|^2)$) and $\hat{r}(x, a)$ ($O(|X|^2)$) \\
+\textbf{Computation:} Solve MDP every epoch, $O(|X||A|)$ for $R_{max}$\\
+\begin{comment}
+	After we get the estimations in, we compute the MDP (which is the end goal).\\
+	The $R_{max}$ algorithm is guaranteed to make progress, but it can be that only one state-action pair is progressed per iteration.\\
+\end{comment}
+
+
+\subsection{Model-free RL}
+\begin{comment}
+	Want to approximate V directly from a policy\\
+\end{comment}
+
+\textbf{TD:} $\hat{V}^\pi(x) = (1-\alpha_t) \hat{V}^\pi(x) + \alpha_t(r + \gamma \hat{V}^\pi(x'))$, w/ $(x,a,r,x')$\\
+\textbf{Conditions:} $\sum_t \alpha_t = \infty, \sum_t \alpha_t^2 < \infty$, $\infty$ visits, follow $\pi$\\
+\begin{comment}
+	Since we don't know the optimal policy yet, we can use the bootstrap estimate from the current policy.
+	It is crucial that we follow the policy.\\
+\end{comment}
+
+\textbf{Q$^*$(x,a)}$ = r(x, a) + \gamma \sum_{x'} p(x'|x,a) V^*(x')$\\
+\textbf{V$^*$(x)}$=\max_a Q^*(x,a)$, even off-policy\\
+
+\textbf{Q-lern:} $\hat{Q}^*(x,a) = (1-\alpha_t) \hat{Q}^*(x,a) + \alpha_t(r + \gamma \max_{a'} \hat{Q}^*(x',a'))$ \\
+\begin{comment}
+	We know that the optimal $V^*$ depends on the Q values, in this approach we directly estimate the Q's and then maximise over them.\\
+	This leaves us with an off-policy method, since we are considering all state-action pairs. It matters again that we visit the states often enough.\\
+	The immediate reward and the transition model only depend on the action a, whereas the long term value depends on the policy $\pi$.\\
+	Update $Q^*$ after each observed transition.\\
+	\textbf{Note:} $V^\pi(x) = Q^\pi(x, \pi(x))$\\
+\end{comment}
+
+\textbf{Optimistic:} $\hat{Q}^*(x,a) = \frac{R_{max}}{1-\gamma} \prod_t^{T_init}(1 - \alpha_t)^{-1}$, perf. as $R_{max}$\\
+\begin{comment}
+	If we initialize the weights like this, we get an optimistic Q-learning with convergence guarantees and the same runtime guarantees as in $R_{max}$\\
+\end{comment}
+
+\textbf{Memory:} Store all $Q^*(x,a)$ ($O(|A||X|)$)\\
+\textbf{Cost:} (single update) compute $\max_{a'} Q^*(x',a')$, $O(|A|)$\\
+\begin{comment}
+	We need to compute the max of v, so it is linear in the number of actions.\\
+\end{comment}
+
+
+% LECTURE 11 %
+
+\textbf{TD-SGD:} $l_2(\theta; x,x',r) = \frac{1}{2}(V(x;\theta) - r - \gamma V(x'; \theta_{old}))^2$\\
+\textbf{Bellman Error:} $\delta = Q(x,a;\theta) - r - \gamma \max_{a'} Q(x',a'; \theta_{old})$\\
+\begin{comment}
+	This can be seen as mean squared errors with labels $r - \gamma(x';\theta_{old})$. The labels change as we gain more experience\\
+	We can now learn a parameterised function to learn V. This can be done with a linear function approximation $Q(x,a;\theta) = \theta^T \phi(x,a)$, or via a neural network\\
+\end{comment}
+
+$L(\theta) = \sum_{(x,a,r,x') \in D} (Q(x,a;\theta) - r - \gamma \max_{a'} Q(x',a'; \theta^{old}))^2$\\
+
+$l_2(\theta; x,a,x',r) = \frac{1}{2}(\delta)^2$, $\nabla l_2() = \delta\nabla Q(x,a; \theta)$
+
+\textbf{Linear:} $Q(x,a;\theta) = \theta^T \phi(x,a)$, $\nabla Q(x,a;\theta) = \phi(x,a)$\\
+\begin{comment}
+	We assume the old Q value, parameterised by the old parameters, to be constant. This is the bootstrapping idea.\\
+	
+\end{comment}
+
+\textbf{Con:} $a_t = \max_a ...$, can be intractable, algo is slow\\
+\textbf{Q-iter:} Keep $\max_{a'} Q(x',a'; \theta^{old})$ for multiple iterations\\
+\begin{comment}
+	The labels keep changing, this introduces stability issues in practice. By keeping a cloned network, the target labels don't jump around as much, leading to accelerated performance.\\
+\end{comment}
+
+
+$L^{DDQN}(\theta) = \sum_{(x,a,r,x') \in D} (r + \gamma Q(x', a^*(\theta); \theta^{old}) - Q(x,a;\theta))^2$, $a^*(\theta) = \argmax_{a'} Q(x', a';\theta)$\\
+\begin{comment}
+	\textbf{Maximation Bias:} The Q function of the target network seeks the max over all possible actions. It seeks this maximum on an already estimated quantity, which can lead to large bias.\\
+	By using two seperate networks, the argmax can be obtained unbiased from the other network. There are multiple variations of this.\\
+	\textbf{Double:} We assume here that two different networks are maintained, one for optimizing the targets, and one for optimizing the value.\\
+	We have to backprop the a-network as well now.\\
+\end{comment}
+
+\textbf{Policy parameterization:} $\pi(x) = \pi(x;\theta)$ $\tau^{(1)},..,\tau^{(m)} \sim \pi_\theta$\\
+$\theta^* = \argmax_\theta J(\theta) 
+\approx \argmax_\theta \frac{1}{m} \sum^M_m \sum^T_t \gamma^t r_t^{(m)}$\\
+\begin{comment}
+	We focus on episodic tasks here, reset the agent after some iterations or terminal after T timesteps. This generates trajectories depending on policy $\pi$. 
+	By Monte Carlo sampling we can globally optimize over the future discounted rewards.\\
+	A trajectory is of form $\tau^{(i)} = (x_0^{(i)}, a_0^{(i)}, r_0^{(i)}, x_1^{(i)}, a_1^{(i)}, r_1^{(i)},...)$\\
+\end{comment}
+
+\textbf{Grad:} $\nabla J(\theta) = \nabla\mathbb{E}_{\tau \sim \pi_\theta} r(\tau) 
+= \mathbb{E}_{\tau \sim \pi_\theta}[r(\tau) \nabla \log \pi_\theta(\tau)]\\
+= \mathbb{E}_{\tau \sim \pi_\theta}[\sum_t^T (r(\tau)-b) \nabla \log \pi_\theta(a_t|x_t; \theta)]$\\
+\textbf{Unbiased}, but very large \textbf{variance}\\ 
+\begin{comment}
+	This means that we try to increase the probability of trajectories with high returns and decrease the probability of trajectories with low returns\\
+	From the MDP, we have $\pi_\theta(\tau) = p(x_0) \prod_t^T \pi(a_t|x_t; \theta) p(x_{t+1}|x_t, a_t)$, thus $\nabla \log \pi_\theta(\tau) = \sum_t^T \nabla \log \pi(a_t| x_t; \theta)$\\
+	The large variance can be fought off by subtracting a baseline.\\
+\end{comment}
+
+\textbf{Baseline:} $b(\tau_{0:t-1}) = \sum_{t'=0}^{t-1} \gamma^{t'}r_{t'}$, $G_t = \sum_{t' = t}^T \gamma^{t'-t} r_t'$\\
+\begin{comment}
+	One could use different baselines, like constants or the mean\\
+\end{comment}
+
+\textbf{Reinforce:} repeat: generate $\tau$, $\theta = \theta + \eta G_t \nabla_\theta \log \pi(a_t|x_t; \theta)$\\
+$\nabla J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[\sum_t^T G_t \nabla \log \pi_\theta(\tau)]\\
+\nabla J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}[\sum_t^T (G_t - b_t(x_t))\nabla \log \pi_\theta(\tau)]$\\
+f.e. mean $b_t(x_t) = \frac{1}{T} \sum_0^T G_t$\\
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

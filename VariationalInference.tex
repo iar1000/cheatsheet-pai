@@ -1,0 +1,135 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Approximate Inference}
+\textbf{Prior:} $p(\theta)$, \textbf{Likelihood:} $p(y|X) = \prod p(y_i | x_i, \theta)$\\
+\textbf{Bayesian Posterior:} $p(\theta | X,y) = \frac{1}{Z} p(\theta) \prod_{i=1}^n p(y_i | x_i, \theta)$\\
+\textbf{Prediction:} $p(y^* | x^*, x_{1:n}, y_{1:n}) = \int p(y^* | x^*, \theta) p(\theta | x_{1:n}, y_{1:n})$
+\begin{comment}
+	We condition everything on the x's, but this notation is dropped now for ease of notation.\\
+\end{comment}
+
+\subsection{Variational Inference}
+\textbf{Goal:} $p(\theta|y) = \frac{1}{Z}p(\theta,y) \approx q(\theta|\lambda)$\\
+
+\subsection{Laplace Approximation}
+$\hat{f}(\theta) = \log p(\theta | y) \approx f(\hat{\theta}) + (\theta - \hat{\theta})^T f(\hat{\theta})' + \frac{1}{2}(\theta - \hat{\theta})^T f(\hat{\theta})'' (\theta - \hat{\theta})$\\
+\begin{comment}
+	It is the second order taylor expansion around the posterior mode. 
+	The first derivative cancels out, since it is zero at the mode.\\
+\end{comment}
+
+$q(\theta) = \frac{1}{Z} \exp(\hat{f}(\theta)) \sim \cN(\hat{\theta}, \Lambda^{-1}), 
+\Lambda = - \nabla \nabla \log p(\hat{\theta} | y), \\
+\hat{\theta} = \argmax p(\theta|y) \rightarrow$
+\textbf{SGD:} $\theta_{t+1} = \theta_t - \eta_t\frac{1}{m}\sum^m\nabla_{\theta}l(\theta_t; x_i)$\\
+\begin{comment}
+	\textbf{Convergence:} With proper learning rate, converges to (local) minimum. Convex functions only have a global minimum.\\
+\end{comment}
+
+$p(y^*|x^*,X) = \int p(y^*|x^*,\theta)p(\theta|X,y) 
+= \int p(y^*|f^*)\int p(f^*|\theta)q_\lambda(\theta)\\
+\approx \int p(y^*|f^*) \cN(f^*; \mu^Tx^*, x^{*T}\Sigma x^*) \leftarrow$ \textbf{Predictive distr.}\\
+\begin{comment}
+	\textbf{Problems:} It greedily seeks mode, then matches the curvature. 
+	This can lead to bad approximations, if the function is imbalanced.\\
+\end{comment}
+
+\subsection{KL-Divergence}
+\textbf{KL:} $KL(q||p) = \int q(\theta) \log \frac{q(\theta)}{p(\theta)} d\theta = \mathbb{E}_{\theta \sim q}[\log\frac{q(\theta)}{p(\theta)}]\geq 0 \leftarrow$ rev.\\
+\begin{comment}
+	\textbf{Variational Familiy:} We want a family of "simple" distributions to use for approximation, such as Gaussian or diagonal Gaussians.\\
+	\textbf{Intuition:} The more p and q agree, the lower the divergence is. If it is zero, they agree almost everywhere. \\
+	\textbf{Symmetry:} In general not symmetric, can't switch p and q\\
+	\textbf{Backwards KL:} $KL(q||p)$ is a mode seeker, since it lets us choose where we want to put q. \\
+	\textbf{Forward KL:} Tries that q is not small where some probability mass of p is, since the fraction would drive the divergence up. It is more inclusive, usually wider, but harder to compute.\\
+\end{comment}
+
+$KL(p||q) = \frac{1}{2}(tr(\Sigma_1^{-1}\Sigma_0) + (\mu_1 \text{-} \mu_0)^T \Sigma_1^{-1} (\mu_1 \text{-} \mu_0) - d + ln(\frac{|\Sigma_1|}{|\Sigma_0|}))$\\
+$p\sim \cN(\mu_0, I), q\sim \cN(\mu_q, I),\rightarrow \frac{||\mu_1 - \mu_0||^2}{2}$
+$| p\sim \cN(\mu_{1:d}, [\sigma_{1:d}^2]),\\ q\sim \cN(0, \sigma_p^2 I) \rightarrow \frac{1}{2} \sum_{i=1}^d (\frac{\sigma_i^2}{\sigma_p	^2} + \frac{\mu_i^2}{\sigma^2_p} - 1 - ln(\frac{\sigma_p^2}{\sigma_i	^2})$
+\begin{comment}
+	\textbf{Gaussian cases:} These special cases are for Standart Normal Gaussians and diagonal Gaussian cases.\\
+\end{comment}
+
+\textbf{Entropy:} $H(q) = - \int q(\theta) \log q(\theta) d\theta = \mathbb{E}_{\theta \sim q} [-\log q(\theta)]$\\
+\textbf{Prod:} $H(q) = \sum_{i=1}^d H(q_i)$, $H(\cN(\mu, \Sigma)) = \frac{1}{2} ln(|2 \pi e \Sigma|)$\\
+\begin{comment}
+	\textbf{Diagonal Gaussian:} $H(\cN) = \frac{1}{2} ln(|2 \pi e \Sigma|) = \frac{1}{2} ln(2\pi e) + \sum_i^d ln(\sigma_i)$\\
+\end{comment}
+
+\textbf{KL:} $q^* \in \arg \min_q KL(q||p) = \arg \min_{q_\lambda} \mathbb{E}_{\theta \sim q}[log \frac{q(\theta)}{\frac{1}{Z	} p(\theta, y)}]\\
+= \arg \max_q \mathbb{E}_{\theta \sim q}[log(p(\theta, y)] + H(q)\\
+= \arg \max_q \mathbb{E}_{\theta \sim q}[log(p(y|\theta)] - KL(q||p(.))$ = ELBO, \textbf{BLR} $\downarrow$\\
+
+\begin{comment}
+	Derivation: $q^* \in \arg \min_q KL(q||p) = \arg \min_q \mathbb{E}_{\theta \sim q}[log \frac{q(\theta)}{\frac{1}{Z	} p(\theta, y)}] \\
+	= \arg \min_q \mathbb{E}_{\theta \sim q}[log (q(\theta)) + log(Z)- log(p(\theta, y)] \\
+= \arg \min_q \mathbb{E}_{\theta \sim q}[- log(p(\theta, y)] + \mathbb{E} [log(Z)] - \mathbb{E} [-log (q(\theta))] \\
+= \arg \max_q \mathbb{E}_{\theta \sim q}[log(p(\theta, y)] + H(q)\\
+= \arg \max_q \mathbb{E}_{\theta \sim q}[log(p(y|\theta) + log(p(\theta)) - log(q(\theta))] \\
+= \arg \max_q \mathbb{E}_{\theta \sim q}[log(p(y|\theta)] - KL(q||p(.))$\\\
+\textbf{Note:} The KL at the bottom is directed at the prior, not the posterior anymore.\\
+\textbf{Interpretation 1:} We want function q that maximizes the joint probabilty, but has high uncertainty where we don't have data.\\
+\textbf{Interpretation 2:} We want to maximize the likelihood of the data, but stay as close to the prior as possible. It acts like a regulation term, otherwise we would get MLE.\\
+In MLE we would optimize over d dimensions, if we have a diagonal Gaussian, the ELBO would optimise the means and variances, e.g. 2d dimensions.\\
+\end{comment}
+
+$\mathbb{E}_{\theta \sim q_\lambda}[-\sum \log (1+ \exp(-y_i\theta^Tx_i))] - \frac{1}{2}\sum^d (\mu_i^2 + \sigma_i^2 - 1 - ln(\sigma_i^2))$
+\begin{comment}
+	This is the Elbo for Bayesian regression.\\
+	Problem: For the expectation term, it is hard to take the derivative, since we can't just push the expectation in. The distribution q itself depends on the parameters theta.\\
+\end{comment}
+
+\subsection{Repatameterization}
+$q(\theta|\lambda) = \phi(\epsilon) |\nabla_\epsilon g(\epsilon; \lambda)|^{-1}$, g invertible\\
+$\Rightarrow \nabla_\lambda \mathbb{E}_{\theta \sim q_\lambda}[f(\theta)]
+ = \mathbb{E}_{\epsilon \sim \phi}[\nabla_\lambda f(g(\epsilon; \lambda))]$, unbiased SGD est.\\
+ 
+\textbf{diag-Gauss:} $\theta = C\epsilon + \mu, \Sigma = CC^T, \phi(\epsilon) = \cN(\epsilon; 0,I)$\\
+\begin{comment}
+	\textbf{Diagonal Gaussian:} In this case, C is just the square root of the variances.\\
+	$\theta$ is now obtain by sampling from the standard normal distribution, adding mu and multiplying by C. 
+	The standard rules of affine transformations of gaussians hold.\\
+	\textbf{Performance:} For diagonal q, only twice as expensive as MAP inference.
+\end{comment}
+
+\textbf{ELBO:} $\nabla_\lambda \mathbb{E}_{\theta \sim q(.|\lambda)}[log(p(y|\theta)] - \nabla_\lambda KL(q_\lambda || p(.))\\ 
+= \nabla_{C, \mu} \mathbb{E}_{\epsilon \sim \cN(0,I)} [log(p(y|C\epsilon+\mu, X)] - \nabla_{C,\mu} KL(q_{C,\mu} || p(.))\\
+\approx n \cdot \frac{1}{m} \sum_j^m \nabla_{C, \mu} log(p(y_{ij}|C\epsilon^{(j)}+\mu, x_{ij}) - \nabla_{C, \mu} KL$, unbiased\\
+\begin{comment}
+	$\nabla_\lambda \mathbb{E}_{\theta \sim q(.|\lambda)}[log(p(y|\theta)]
+	= \nabla_{C, \mu} \mathbb{E}_{\epsilon \sim \cN(0,I)} [log(p(y|C\epsilon+\mu, X)] \\ 
+	= \nabla_{C, \mu} \mathbb{E}_{\epsilon \sim \cN(0,I)} [n \frac{1}{n}\sum log(p(y_i|C\epsilon+\mu, x_i)] \\
+	= n \cdot \mathbb{E}_{\epsilon \sim \cN(0,I)} \mathbb{E}_{i \sim Uniform} [\nabla_{C, \mu} log(p(y_i|C\epsilon+\mu, x_i)]$\\
+\end{comment}
+
+
+\section{Bayesian Logistic Regression}
+\textbf{Prior:} $p(\theta) = \cN(0, \sigma_p^2 \cdot I)$, \textbf{Lhood:} $p(y|X,w) = \prod \sigma(y_i \cdot w^T x_i)$\\
+$p(y|x,w) = Ber(y; \sigma(w^T x))$\\
+\begin{comment}
+	When the argument is positive, then the sigmoid function is evaluating to something bigger than 0.5, if it is negative, it is evaluating to something lower.\\
+	Only if the signs of the label and the prediction match the evaluation is positive.\\
+\end{comment}
+
+\textbf{Laplace:} $\hat{w} = \arg\max_w p(w | y) 
+= \text{am}_w \log p(w) + \log p(y|w)\\
+= \arg\min_w \frac{1}{2 \sigma_p^2} ||w||^2_2 + \sum_{i=1}^n \log(1 + \exp(-y_i w^T x_i))$ (use SGD)\\
+\begin{comment}
+	\textbf{Logistic Regression:} Seeking the mode is giving us the loss of the standart logistic Regression.
+	Use log and remove constants to get the Logistic Loss.\\
+\end{comment}
+
+\textbf{SGD:} $w = w(1-2\lambda \eta_t)+\eta_t y x \frac{1}{1+exp(yw^Tx)} (\leftarrow \hat{P}(Y = -y | w,x))$
+
+$\Lambda = -\nabla\nabla \log p(\hat{w}| X,y)
+= X^T diag([\sigma(\hat{w}^T x_i)(1 - \sigma(\hat{w}^T x_i))]_i) X$
+
+\textbf{Predict:} $p(y^*|x^*,X,y) = \int \sigma(y^*f) \cN(f; \hat{w}^Tx^*, x^{*T}\Lambda^{-1} x^*)$\\
+\begin{comment}
+	This integral still has no closed form, but can be efficiently approximated with Gaussian quadrature.\\
+\end{comment}
+
+

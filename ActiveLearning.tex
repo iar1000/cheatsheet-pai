@@ -1,0 +1,113 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Active Learning}
+\begin{comment}
+	We can model the uncertainty with previously discussed methods, and we can categorise them into aleatoric and epistemic uncertainty.
+	The topic is now how to make decisions based on this uncertainty.\\
+	\textbf{Active Learning:} Algorithm learns where samples should be taken. Makes sense when attaining samples is expensive. Often we have a collection of unlabeled datapoints, where do we want to aquire a label?\\
+\end{comment}
+
+\textbf{Note:} GP Posterior covariance does not depend on y\\
+
+\textbf{Entropy:} $H(X) = \mathbb{E}_{x \sim p(x)}[-\log p(x)], 
+H(X|Y)\\ = \mathbb{E}_{y \sim p(y)}[H(X|Y=y)],
+H(X) + H(Y|X) = H(X,Y)$\\
+\textbf{Gauss:} $X \sim \cN(\mu, \Sigma), H(x) = \frac{1}{2}\log(2\pi e)^d |\Sigma|$\\
+\textbf{Mutual Info:} $I(X;Y) = H(X)-H(X|Y),
+I(X; Y|Z) = H(X|Z) - H(X| Y,Z)$, symmetric\\
+
+\textbf{Gauss:} $X \sim \cN(\mu, \Sigma), Y = X + \epsilon, \epsilon \sim \cN(0, \sigma_n^2 \cdot I)$\\
+$I(X;Y) = H(Y) - H(Y|X) = H(Y) - H(\epsilon) \\
+= \frac{1}{2} \log(2 \pi e)^d |\Sigma + \sigma_n^2I| - \frac{1}{2} \log(2 \pi e)^d |\sigma_n^2I| 
+= \frac{1}{2} \log |I + \sigma_n^{-2} \Sigma|$
+\begin{comment}
+	If we have a dependent variable, we see by this example that we don't gain a lot of information.\\
+\end{comment}
+
+\textbf{Target:} $\max F(S) = I(f;y_S) = H(f) - H(f|y_S)$, w/ $S \subseteq D$\\
+\begin{comment}
+	We want to find a subset of points which maximises the information we gain on the function f. If we deal with Gaussians, we can use the formula above.\\
+	This is only one way to define utility.\\
+\end{comment}
+
+\textbf{Greedy (Homoscedasdic):} $x_{t+1} = \arg \max_{x \in D} F(S_t \cup \{x \}) \\
+= \arg \max_{x \in D} I(f; y_{S_t + x}) - I(f; y_{S_t})
+= \arg \max_{x \in D} H(f) - H(f|y_{S_t + x}) - H(f) + H(f|y_{S_t})
+=^{const. \sigma_n^2} \arg \max_{x \in D} \sigma_t^2(x)$\\
+\begin{comment}
+		F(S) is NP-Hard to optimize in this discrete case, we often use heuristics to solve this problem.\\
+		x could be something continuous or non-deterministic (e.g. throw a sensor somewhere), then this optimization problem changes.\\
+		With the greedy approach, and the assumption that we have constant (homoscedastic) noise, we just pick the points where we are the most uncertain. In other words, we can maximise greedily the mutual information.\\
+		This way of collecting the set of points is near-optimal.\\
+		\textbf{Derivation:} $x_{t+1} = \arg \max_{x \in D} F(S_t \cup \{x \}) \\
+= \arg \max_{x \in D} F(S_t \cup \{x \}) - F(S_t)\\
+= \arg \max_{x \in D} I(f; y_{S_t + x}) - I(f; y_{S_t})\\
+= \arg \max_{x \in D} H(f) - H(f|y_{S_t + x}) - H(f) + H(f|y_{S_t})\\
+= \arg \max_{x \in D} H(f|y_{S_t}) - H(f|y_{S_t + x})\\
+= \arg \max_{x \in D} I(f; y_x|y_{S_t})\\
+=^{Gauss} \arg \max_{x \in D} \frac{1}{2} \log (1+ \frac{\sigma_t^2(x)}{\sigma_n^2})\\
+=^{const. \sigma_n^2} \arg \max_{x \in D} \sigma_t^2(x)$\\
+\end{comment}
+
+\textbf{Greedy (Heteroscedastic):} $x_{t+1} = \arg \max_{x \in D} \frac{\sigma_f^2(x)}{\sigma_n^2(x)}$\\
+\begin{comment}
+	\textbf{Interpretation:} Epistemic uncertainty divided by the Aleatoric uncertainty. \\
+	Just because we are very uncertain at a point, does not mean that we decrease the uncertainty by sampling at that point. It could be that the uncertainty comes from irreducible noise anyways.\\
+\end{comment}
+
+\textbf{Performance:} Cons-factor approx. (near opt.), submodular
+\begin{comment}
+	\textbf{Proof:} Via submodularity...\
+\end{comment}
+
+\textbf{Classification:} $x_{t+1} = \arg \max_{x \in D} H(Y|x,x_{1:n}, y_{1:n})\\
+= \arg \max_{x \in D} -\sum_y \log p(y| x,x_{1:n}, y_{1:n})$\\
+\begin{comment}
+	\textbf{Intuition, heteroscedastic case:} The most uncertain label is not necessarily the most informative. If we have binary classification, the point closest to the division boundary are chosen.\\ 
+	But, those are also the points with the largest variance (aleatoric noise), since they are farthest away from the "source" cluster. So if the aleatoric noise is high, the decision boundary might choose weird points and don't get a proper fit.\\
+\end{comment}
+
+\section{Bayesian Optimization}
+\begin{comment}
+	For example synthesizing molecules or choosing hyperparameters of neural networks, we want some kind of process to derive the next parameters to try out.
+	The evaluation of the parameters is very expensive.\\
+	\textbf{Tradeoff:} Exploitation vs. exploration. We don't want to make experience with clearly suboptimal results, so we need to balance these two factors.\\
+	\textbf{Key Idea:} Learn an approximate model of a blackbox function, which then can be used to plan what samples to take next. The samples we get are noisy: $y_t = f(x_t) + \epsilon_t$.\\
+	\textbf{Goal:} How to sequentially pick x's to find $\max_x f(x)$ with minimal samples. Find an aquisition function that does this.\\
+\end{comment}
+\textbf{Given:} Noisy  black-box f, choose $x_1,..,x_T| \downarrow \text{ if } \frac{R_T}{T} \rightarrow 0 $\\
+\textbf{Regret:} $R_T = \sum_t^T(\max_x f(x) - f(x_t)) \Rightarrow \max f(x_t) \rightarrow f(x^*)$\\
+\begin{comment}
+	Given a set of possible inputs D, and noisy blackbox function f, choose $x_s$ and observe $y_t = f(x_t) + \epsilon_t$.\\
+	The cumulative regret tells us the error if we knew the maximum in advance. It has to go to zero over time, to reach the actual maximum.\\
+	Algorithms have regret bounds, which jufge the effectiveness of an algorithm.\\
+\end{comment}
+
+\textbf{UpConfidence:} f at least highest lower bound (f enclosed)\\
+\begin{comment}
+	We assume here that the GP we are looking at has the function enclosed. This means, that the maximum of the function must be at least as high as the maximum lower bound. We can focus on the regions where this is true\\
+\end{comment}
+
+\textbf{GP-UCB:} $x_t = \arg \max_{x \in D} \mu_{t-1}(x) + \beta_t \sigma_{t-1}(x)$\\
+\begin{comment}
+	The goal is to maximise the upper confidence bound.
+	\textbf{Assumption:} The underlying function really is something like the prior, f.e. a Gaussian. Also, we need this to hold for all the points, so we need to do a union bound over the points. This can be solved by using a large constant $\beta$.\\
+	If Beta is huge, we just do uncertainty sampling. With a proper $\beta$, we naturally incorporate exploitation around the means.\\
+	The optimization function is generally non-convex, can be optimized with SGD.\\
+\end{comment}
+
+\textbf{Reget:}$\frac{1}{T}\sum^T[f(x^*) - f(x_t)] = O(\sqrt{\frac{\gamma_T}{T}}), \gamma_T = \max_{\leq T} I(f;y_s)$\\
+\textbf{Lin:}$\gamma_T = O(d \log T)$,\textbf{Exp}$= O((log T)^{d+1})$,\textbf{Matrn}$= O(TlogT)$\\
+\begin{comment}
+	\textbf{Intuition:} Depending on the kernel, the regret has different convergence/ regret guarantees.\\
+\end{comment}
+
+\textbf{Thompson:} $\hat{f} \sim P(f|x_{1:n}, y_{1:n}), x_{t+1} \in \argmax \hat{f}(x)$
+
+
+
+
+
+

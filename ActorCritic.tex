@@ -1,0 +1,67 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Actor Critic}
+$A^\pi(x,a) = Q^\pi(x,a) - V^\pi(x)= Q^\pi(x,a) - \mathbb{E}_{a'\sim \pi(x)}[Q^\pi(x,a')]$\\
+\begin{comment}
+	The advantage is the difference of the reward we getaaby taking action a in state x, and the expected reward we get in state x taking the action from our current policy.\\
+	When the advantage function is positive, it is an action we want to play, if it is negative, we rather not want to play the action. This is different than with the Q value.\\
+\end{comment}
+
+ \textbf{Policy Grad:} $\nabla J(\theta) = \mathbb{E}_{(x,a) \sim \pi_\theta}[Q(x,a; \theta_Q) \nabla \log \pi(a | x;\theta_\pi)]$\\
+ \begin{comment}
+ 	Gradient is expectation over state-action pairs, properly discounted by how much we visit this state action pair in $\pi$, times the action-value function of that state-action pair.\\
+ 	\textbf{Actor:} Parameterised policy\\
+ 	\textbf{Critic:} The parameterised estimate of the action-state value, also known as Q value.\\
+ 	When computing this expectation, we often use one-step approximations. This introduces variance, which we can reduce by subtracting a baseline again.\\
+ \end{comment}
+ 
+ \subsection{Online Actor Critic}
+ $\theta_\pi \leftarrow \theta_\pi + \eta Q(x,a;\theta_Q) \nabla \log \pi(a | x;\theta_\pi)$\\
+ $\theta_Q \leftarrow \theta_Q - \eta_t( Q(x,a; \theta_Q) - r - \gamma Q(x', \pi(x', \theta_\pi); \theta_Q)) \nabla Q(x,a; \theta_Q)$\\
+\begin{comment}
+	Guaranteed to improve under certain conditions.\\
+\end{comment}
+
+\textbf{A2C:} $\theta_\pi \leftarrow \theta_\pi + \eta [Q(x,a;\theta_Q) - V(x;\theta_V)] \nabla \log \pi(a | x;\theta_\pi)$\\
+ \begin{comment}
+ 	This is not unbiased anymore, since the Q value is only an approximation. If we would use the true Q value, we would have a convergence guarantee.\\
+ 	We can guarantee improvement by introducing compatibility conditions.\\
+\end{comment}
+ 
+\textbf{Note:} On policy, use expectation over policy\\
+\begin{comment}
+	\textbf{Bootleneck:} The problem with on-policy methods is that they have sample inefficiencies. We always need to sample from the current policy.\\
+\end{comment}
+
+\subsection{Parameterised Policies}
+$L(\theta_Q) = \sum_{(x,a,r,x') \in D} ( r + \gamma Q(x',\pi(x'; \theta_\pi); \theta^{old}_Q) - Q(x,a;\theta_Q))^2$\\
+\begin{comment}
+	The initial motivation was $L(\theta)$, we can replace this exact (untractable) maximum with a parameterised policy.\\
+\end{comment}
+\textbf{Target:} $\pi_G(x) = \argmax_a Q^\pi(x,a) = \argmax_a A^\pi(x, a)$\\
+
+\textbf{Objective:} $\theta_\pi^* \in \argmax_\theta \mathbb{E}_{x \sim \mu}[Q(x, \pi(x;\theta_\pi); \theta_Q]$\\
+\begin{comment}
+	$\mu(x)$ must be complex enough to be able to explore all states, making it possible to converge to the maximum state.\\
+\end{comment}
+
+\textbf{Grad:} $\nabla_\theta J_{\mu}(\theta) = \mathbb{E}_{x \sim \mu}[\nabla_a Q(x, a)|_{a=\pi(x; \theta_\pi)} \nabla_{\theta_\pi} \pi(x;\theta_\pi)]$\\
+\begin{comment}
+	The policies gradient methods we saw before relied on randomized policies for exploration. This method uses a deterministic policy.\\
+	We can inject gaussian noise to encourage exploration.\\
+\end{comment}
+
+\textbf{DDPG:} act after $a = \pi(x; \theta_\pi) + \epsilon, \epsilon \sim \cN(0, \lambda I)$\\
+$y = r + \gamma Q(x', \pi(x', \theta_\pi^{old}), \theta_Q^{old})$, update\\
+$\theta_Q \leftarrow \theta_Q - \eta \nabla \frac{1}{|B|}\Sigma(Q(x,a;\theta_Q) - y)^2$, $\theta_Q^{old} \leftarrow (1-\rho) \theta_Q^{old} + \rho \theta_Q^{old}$\\
+$\theta_\pi \leftarrow \theta_\pi + \eta\nabla\frac{1}{|B|}\Sigma Q(x, \pi(x;\theta_\pi); \theta_Q)$, $\theta_\pi^{old} \leftarrow (1-\rho) \theta_\pi^{old} + \rho \theta_\pi^{old}$\\
+\begin{comment}
+	We here have random Gaussian noise injected to explore.\\
+\end{comment}
+
+
+
+
+

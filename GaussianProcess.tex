@@ -1,0 +1,88 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Gaussian Process}
+\begin{comment}
+	Generalization of Bayesian linear regression. 
+	Gaussian Processes are looking at it from the function space, e.g. models distributions over functions directly.\\
+	In Bayesian linear regression we modelled the distribution over the weights.\\
+\end{comment}
+
+\textbf{Introduce non-linearity:} $f(x) = w^T \phi(x) \Rightarrow$ dim. explosion\\
+
+\textbf{Kernel:} $x_i^T x_j \Rightarrow \phi(x)^T \phi(x) = k(x_i, x_j)$\\
+
+\textbf{F-space:} $f = [f_{i:n}] = Xw$, $w\sim \cN(0, \sigma_p^2I)$, $f \sim \cN(0, \sigma_p^2 XX^T)$\\
+\begin{comment}
+	Instead of thinking about Gaussian priors on the weights w (weight-space), we think about gaussian priors on the function values $f=w^Tx$ (function-space).\\
+	The linear model then only encodes correlations between the functions through the Kernel, we only need to model how new functions (linearly transformed points) are correlating to the functions we have.\\
+	The conversion from weight space to function space happens through linear transformation of the weights, this assumes X to be constant!\\
+\end{comment}
+
+\textbf{Predict:} $y^* = f^* + \epsilon \sim \cN(0, \sigma_p^2 \hat{X}\hat{X}^T + \sigma_n^2 I)$, $\hat{X}^T = [X^T,x^*]$ \\
+\begin{comment}
+	Data only enters through the inner products, which make kernels very useful.
+	The it models how new data correlates with already given data.\\
+
+	\textbf{Intuition:} We place a prior on functions that correlate with our data.
+	Functions that agree with our prior and have a high likelihood are more likely, due to bayes: $P(f | data) = P(f) P(data | f)$\\
+\end{comment}
+
+\textbf{GP:} $f \sim GP(\mu(.), k(.,.))$, $\mu: X \rightarrow \mathbb{R}, k: X\times X \rightarrow \mathbb{R}$\\
+\begin{comment}
+	\textbf{Definition:} A set of (infinitely) many random variables, using a finite subset indexed by a set X.\\
+	\textbf{Definition 2:} A set of variables are a GP, if and only if any marginalized set of random variables is a multivariate Gaussian.\\
+	We need to make sure that we are consistent in this infinite set, that's why we have a mean function and covariance function, both encode assumptions about the prior. By having each function a Gaussian, we can combine the means/variances of the single random variables.\\
+\end{comment}
+
+$P(f|X_A,y_A) = GP(f; 
+\mu(x) + k_{x,A}(K_{AA} + \sigma_n^2 I)^{-1}(y - \mu_A),\\
+k(x,x') - k_{x,A}^T(K_{AA} + \sigma_n^2 I)^{-1} k_{x',A}))$\\
+\begin{comment}
+	\textbf{Cost:} Size of $K_{AA}$ is $|X_A|\times |X_A|$, cost of inversion $O(|X_A|^3)$. 
+	$k_{x',X_A}$ is a $|X_A|$ vector, evaluating x' against all elements from $X_A$.\\
+	\textbf{Speed-up:} Kernels with distance notion can just use nearby points, treat the rest as independent.\\
+\end{comment}
+
+\textbf{Sample:} $f \sim \cN(0,K), K=LL^T, \epsilon \sim \cN(0,I) \Rightarrow f = L\epsilon$\\
+\begin{comment}
+	We don't sample f directly, we sample from a marginal distribution that is finite and Gaussian.\\
+\end{comment}
+
+\textbf{Model select:} $\hat{\theta} = \argmax_\theta \int p(y_{train} | X_{train}, f, \theta) p(f | \theta) df$\\
+$= \argmax \int \cN(y; f(x), \sigma_n^2) \cN(f; 0, K_f(\theta))
+= \argmax \\ \cN(y; 0, K_f(\theta) + \sigma_n^2 I)
+= \argmin -\frac{1}{2}y^T K_y(\theta)^{-1}y - \frac{1}{2} \log |K_y(\theta)|$\\
+\begin{comment}
+	\textbf{Intuition:} We average over all possible functions, that means that the model must balance out fitting the data (likelihood) and obeying the prior (prior).\\
+	\textbf{CV:} In cross-validation, we find the parameters that fit best for one particular case, which can lead to overfitting more quickly.\\
+	The parameters are often $[\sigma_p, \sigma_n, h]$.\\
+\end{comment}
+
+\textbf{Performance:} Parallel, Local, Kernel approx, $O(n^3)$\\
+
+\textbf{Fourier:} Shift-invariant kernel features BL, $O(nm^2 + m^3)$\\
+\begin{comment}
+	The Gaussian kernel is a standart normal Gaussian in the Fourier Space.\\
+\end{comment} 
+
+\textbf{Bochner:} Shift-invariant kernel p.d. $\Leftrightarrow$ $p(\omega)$ non-negative\\
+
+\subsection{Kernel}
+\textbf{Correlation:} $k(x_1, x_2) = Cov(f(x_1), f(x_2))$\\
+$\forall x,x',k(x, x') = k(x', x)$, p.s.d (positive EV) $x^T K_{AA} x \geq 0$.\\
+\textbf{Composition:} +,$\cdot$,$k\cdot const.$, $poly(f)$, $\exp(f)$ give again kernels\\
+\textbf{Stationary:} if it holds $k(x,x') = k(x-x')$\\
+\textbf{Isotropic:} $k(x,x') = k(||x-x'||_2)$, implies stationary\\
+\begin{comment}
+	After fitting to a sample point, the posterior is not isotropic, since the variance is decreased in the region of the sample.\\
+\end{comment}
+
+\textbf{Linear:} $k(x,x') = x^T x'$ = Bayesian linear regression\\
+\textbf{Poly2:} $k(x,x') = \phi(x)^T \phi(x'), \phi(x) = [1, x, x^2]$\\
+\textbf{Exp$^2$:} $k(x,x') = \exp(-||x - x'||_2^2 / h^2)$, decay with distance \\
+\textbf{Exp:} $k(x,x') = \exp(-||x - x'||_1 / h)$, decay with distance \\
+\begin{comment}
+	\textbf{Visual smoothness:} The bigger h is, the higher is the radius of influence. This means that the functions appear much smoother.\\
+\end{comment} 

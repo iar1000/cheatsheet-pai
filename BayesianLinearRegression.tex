@@ -1,0 +1,44 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Bayesian Linear Regression}
+\begin{comment}
+	\textbf{Goal:} Use data ($\cX \text{ } \cY$) to fit a function ($\cX \rightarrow \cY$).
+	Use this function to predict unseen data.\\
+\end{comment}
+
+\textbf{Ridge:} $y \approx w^Tx$, $\hat{w} = \arg\min_w \sum_i^n(y_i - w^Tx_i)^2 + \lambda ||w||^2_2$\\
+\textbf{Analytical:} $\hat{w} = (X^TX + \lambda I)^{-1} X^Ty$\\
+
+\textbf{Prior:} $P(w) = \cN(0,\sigma^2_p I)$ \\
+\textbf{Lhood:} $P(y|w,x) = \prod_i^n P(y_i | w,x_i) = \prod_i^n \cN(y_i; w^Tx_i, \sigma^2_n)$\\
+\begin{comment}
+In Bayes, we assume that y is not estimated as a single value, but drawn from a distribution.\\
+\end{comment}
+
+$\hat{w} = \arg\max_w P(w|X,y) = \arg\max_w (\frac{1}{Z}) P(w|X) \prod_i P(y_i|w,x_i)$\\
+$P(\hat{w}|X,y) = \cN(\hat{w}; (X^TX + \frac{\sigma_n^2}{\sigma_p^2}I)^{-1} X^Ty, (\sigma_n^{-2}X^TX + \sigma_p^{-2}I)^{-1})$\\
+\begin{comment} 
+	Assumes the weights to be Gaussian and the noise of the labels from $P(y|x,w)$ to be i.i.d. Gaussian.\\
+	If we would not assume a prior, we would get the MLE, which are simply mean and variance of the given data (No regularization in Ridge regression).\\
+	$\lambda$ is the ratio $\frac{\sigma^2_n}{\sigma^2_p}$ of noise in y to the variance of the weights \\
+	\textbf{Derivation:} Maximize the posterior by using Bayes rule, Ridge regression $\Rightarrow$ MAP weight estimate.\\
+	 Use the definition of P(w) and $P(y|w,x)$ and remove constants to derive ridge regression.\\
+\end{comment}
+
+\textbf{Predict:} $P(y^* | X,y,x^*) = \int p(y^* | x^*, w) p(w| x_{1:n}, y_{1:n}) dw\\ 
+= \cN(\hat{\mu_w}^Tx^*, x^{*T}\hat{\Sigma_w}x^* + \sigma_n^2)$, in $O(nd^2)$\\
+\begin{comment}
+	The predictive distribution is dependent on the distribution over the weights, as it averages over all possible weights.
+	The predicted point $y^*$ adds variance, as the point can be seen as the prediction of $w^Tx^* + \epsilon$.\\
+\end{comment}
+
+\textbf{Epistemic:} Lack of data, the part $x^{*T}\hat{\Sigma}x^*$\\
+\textbf{Aleatoric:} Irreducible noise from observation, the part $\sigma_n^2$\\
+
+\textbf{Hyperparas:} $\lambda = \frac{\sigma_n^2}{\sigma_p^2}$ via CV, $\sigma_n^2 \approx \frac{1}{n}\sum_i(y_i - w^Tx_i)^2$\\
+\begin{comment}
+	The variance of the weights can then be derived from these two equations.\\
+\end{comment}
+

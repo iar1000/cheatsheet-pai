@@ -1,0 +1,78 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Bayesian Deep Learning}
+\begin{comment}
+	We want to treat the weights of a neural network as distributions, for which we can define uncertainty as well.\\
+\end{comment}
+
+\textbf{Neural Net:} $f(x;w) = \varphi(W_1\varphi(W_2(..\varphi(W_l x)))$\\
+
+\textbf{Basic Unit:} $v_i^{(l)} = \varphi(w_i^{(l)T} v^{(l-1)})$\\
+\begin{comment}
+	We want each unit to be differentiable, such that efficient computation graphs can be automatically created.\\
+\end{comment}
+
+\textbf{tanh(z)} $= \frac{\exp(z) - \exp(-z)}{\exp(z) + \exp(-z)}$
+\textbf{reLu(z)} $= \max(z,0)$\\
+
+\textbf{Bayesian NN:} $p(y | x,\theta) = \cN(y; f_1(x, \theta), f_2(x, \theta))$\\
+
+\textbf{MAP:} $\hat{\theta} = \arg\min_\theta \lambda ||\theta||^2 + \sum_{i=1}^n \log \sigma^2(x_i,\theta) + \frac{(y_i-\mu(x_i, \theta))^2}{\sigma^2(x_i, \theta)}$\\
+\begin{comment}
+	Can be derived by plugging in the Bayesian NN likelihood and a standard Gaussian prior.\\
+	\textbf{Intuition:} The model can be far of the mean and can still balance it out with increased variance. High variance is costly, though.\\
+	The model has to balance out how it explains the data with mean and variance.\\
+\end{comment}
+
+\textbf{Predict:} $p(y^* | x^*, x_{1:n}, y_{1:n}) 
+= \mathbb{E}_{\theta \sim p(.|X,y)} [p(y^*|x^*,\theta)] \\
+\approx \frac{1}{m} \sum_j^m \cN(y^*; \mu(x^*, \theta^{(j)}), \sigma^2(x^*, \theta^{(j)}))$\\
+\begin{comment}
+	We just parameterize all the means and variances with our NN. If we use the reparameterization trick, we follow along an use $C\epsilon + \mu$ as new $\theta$.\\
+	For Gaussian likelihood, the prediction becomes a mixture of Gaussians.\\
+\end{comment}
+
+\textbf{Mean:} $\mathbb{E}[y^*|X,y,x^*]  
+\approx \bar{\mu}(x^*) 
+=\frac{1}{m}\sum_j^m \mu(x^*, \theta^{(j)})$\\
+
+$Var[y^*|X,y,x^*] = Var[\mathbb{E}[y^*|X,y,x^*]] + \mathbb{E}[Var[y^*|X,y,x^*]] \\
+= \frac{1}{m}\sum_j^m \sigma^2(x^*, \theta^{(j)}) + \frac{1}{m}\sum_j^m (\mu(x^*, \theta^{(j)}) - \bar{\mu}(x^*))^2$\\
+\begin{comment}
+	The variance of the prediction is dependent on the variance of the weights.\\
+	We can split up the uncertainty into Aleatoric (sigma-term) and epistemic (mu-term)\\
+\end{comment}
+
+\subsection{MCM}
+\textbf{Predict:} $p(y^*| X,y,x^*) \approx \frac{1}{T} \sum_j^T p(y^*| x^*, \theta^{(j)})$, $\theta^{(i)}$ as NN W\\
+
+\textbf{Approx:} $q(\theta| \mu_{1:d}, \sigma^2_{1:d}), \mu = \frac{1}{T} \sum_j^T \theta^{(j)},
+\sigma^2 = \frac{1}{T} \sum_j^T (\theta^{(j)} - \mu)^2$\\
+\begin{comment}
+	We can keep track of the weight means and variances by keeping a running average while monte-carlo sampling.
+	The parameters can then easily be approximated with a Gaussian.\\ 
+\end{comment}
+
+\textbf{softmax(f):} $p(y|x,\theta) = p_y = \frac{\exp(f_y)}{\sum_j^c \exp(f_j)}$, $softmax(f+\epsilon)$\\
+\begin{comment}
+	Gives probability distribution over the c classes.\\
+	We can inject noise $softmax(f+\epsilon)$, saying that we are unsure about some parts of the predictive classes. This is analog to adding Epistemic noise, just for classification.\\
+\end{comment}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

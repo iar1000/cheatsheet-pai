@@ -1,0 +1,103 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Markov Decision Process}
+\begin{comment}
+	\textbf{Probabilistic planning:} How should we control an agent to accomplish some goal\\
+\end{comment}
+
+\textbf{MDP:} State X, Action A, Transition $P(x'|x,a)$, Reward $r(x,a)$\\
+\begin{comment}
+	We have an observable state and a finite number of actions. 
+	The actions are dictated by the task and the environment, while the reward function gives us room for design choices.
+	Each transition probability is independent, giving it the Markovian assumption. We only care about where an actor currently is, not were he was.\\
+\end{comment}
+
+\textbf{Policy:} $\pi: X \rightarrow A$, $P(X_{t+1} = x' | X_t = x) = P(x' | x, \pi(x))$, \textbf{or}\\
+\begin{comment}
+	Deterministic Policy\\
+\end{comment}
+$\pi: X \rightarrow P(A)$, $P(X_{t+1} = x' | X_t = x) = \sum_a \pi(a|x) p(x'|x,a)$\\
+\begin{comment}
+	Probabilistic Policy\\
+\end{comment}
+
+\textbf{Expectation:} $J(\pi) = \mathbb{E}[\sum_{t=0}^\infty \gamma^t r(X_t, \pi(X_t))]$, for MC: $X_0,..$\\
+\begin{comment}
+	\textbf{Note:} This expectation depends on the inital state of the MC.
+	We can use gamma to regulate how much we care about future rewards.\\
+\end{comment}
+
+\textbf{V$^\pi$(x)}$ = J(\pi|X_0=x)
+= r(x, \pi(x)) + \gamma \sum_{x'} p(x'|x,\pi(x)) V^\pi(x')$\\
+\begin{comment}
+	The value function at a specific state x incorporates the reward at this  state when acting after policy $\pi$, and expected reward it could get.\\
+	It is recursively defined, using the expected rewards of other reachable states through their value function.\\
+\end{comment}
+
+\textbf{Exact solution:} $V^\pi = (I - \gamma T^\pi)^{-1} r^\pi$, w/ $\gamma < 1$, P/r known\\
+\begin{comment}
+	$V^\pi = \begin{pmatrix} V^\pi(1), \hdots, V^\pi(n) \end{pmatrix}$\\
+$	r^\pi = \begin{pmatrix} r^\pi(1, \pi(1)), \hdots, r^\pi(n, \pi(n)) \end{pmatrix}$\\
+	$T^\pi = \begin{pmatrix}
+ 		p(1|1,\pi(1)) & \cdots & p(n|1,\pi(1))\\
+ 		\vdots & \ddots & \vdots\\
+ 		p(1|n,\pi(n)) & \cdots & p(n|n,\pi(n))\\
+ 	\end{pmatrix}$\\
+\end{comment}
+
+\textbf{Fixed Point:} for $t=1:T$ do $V^\pi = r^\pi + \gamma T^\pi V^\pi_{t-1}$\\
+$B^\pi V := r^\pi + \gamma T^\pi V \Rightarrow B^\pi V^\pi = V^\pi \\
+||B^\pi V - B^\pi V'|| \leq \gamma ||V - V'||,
+||V^\pi_t - V^\pi|| \leq \gamma^t|| V_0^\pi - V^\pi||$
+\begin{comment}
+	With the contraction B, an upper bound can be derived in terms of $\gamma$ and the value function. 
+	Considering the true Value function $V^\pi$, we see that each iteration is reducing the error exponentially.\\
+\end{comment}
+
+\textbf{Greedy Policy:} $\pi^* = \arg\max J(\pi)$, \# policies $O(|X|^{|A|})$\\
+\textbf{w.r.t. V:} $\pi_G(x) = \arg \max_a r(x,a) + \gamma \sum_{x'} p(x'|x,a) V(x')$\\
+\textbf{Bellman:} $V^*(x) = \max_a[r(x,a) + \gamma \sum_{x'} p(x'| x,a) V^*(x')]$\\
+$Q^*(x,a) = \mathbb{E}_{x'}[r(x,a) + \gamma \max_{x'} Q^*(x', a')]$\\
+\begin{comment}
+	Every value function induces a policy, every policy induces a value function.\\
+	\textbf{Bellman Theorem:} The optimal policy is greedy w.r.t. to its induced value function.\\
+\end{comment}
+
+\textbf{Policy Iteration:} 1) $V^\pi(x)$ 2) $\pi_G$ w.r.t. $V^\pi$ 3) $\pi = \pi_G$\\
+\textbf{Convergence:} $V^{\pi_{t+1}} \geq V^{\pi_{t}}$, $\pi^*$ in $O(n^2 m / (1-\gamma))$\\
+\begin{comment}
+	We initialize with a random policy, although, the convergence depends heavily on the initialization\\
+\end{comment}
+
+\textbf{Value iteration:} $V_{t}(x) = \max_a Q_t(x,a)$ until $||V_t - V_{t-1}|| \leq \epsilon$\\
+$\forall a,x: Q_t(x,a) = r(x, a) + \gamma \sum_{x'} P(x'|x,a) V_{t-1}(x')$\\
+\begin{comment}
+	Value iteration is a dynamic program, which stores the intermediate V's to use in the next round. In each round, the Q-Values of all state-action pairs must be calculated, which can be computationally intensive.\\
+	\textbf{Note:} It is guaranteed to converge!\\
+	\textbf{reward:} If for an action exist multiple outcomes, then the expected reward is counted. The reward function slips into the sum.\\
+\end{comment}
+
+\textbf{PI:} exact, expensive \textbf{vs. VI:} cheap, more iters, $\epsilon-$optimal\\
+\begin{comment}
+	Both need polynomial iterations. 
+	Policy iteration need much less iterations and solves the problem exact, but it is expensive to compute one iteration.\\
+	Value iteration is fast per iteration, but needs more iterations. Also, the solution is only $\epsilon-$optimal, compared to PI.\\
+\end{comment}
+
+\subsection{POMDP- Belief state MDP}
+\begin{comment}
+	If the state space is very large or continuous, we can't solve the MDP exactly anymore. This model generalises MDP's, using a so-called belief state, e.g. the actor don't know anymore at what state we are, but has a belief of it.\\ 
+	Typically, they are untractable.\\
+\end{comment}
+
+\textbf{Observe:} $P(Y_{t+1} = y| b_t, a_t) = \sum_{x,x'} b_t(x) P(x'| x, a_t) P(y|x')$\\
+$b_{t+1}(x') = \frac{1}{Z} \sum_x b_t(x) P(X_{t+1} = x'| X_t = x, a_t) P(y_{t+1}|x')$\\
+\textbf{Reward:} $r(b_t, a_t) = \sum_x b_t(x) r(x,a_t)$\\
+\begin{comment}
+	The transition model now contains stochastic observations and state updates through bayesian filtering.\\
+	It can calculate the optimal action using dynamic programming. Often, the horizon is limited to T, the reachable belief states still grow exponential in T.\\
+\end{comment}
+
+

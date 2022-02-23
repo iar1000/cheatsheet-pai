@@ -1,0 +1,64 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Probability}
+\begin{comment}
+\textbf{Normalization:} $P(\Omega) = 1$, \textbf{Non-negativity:} $P(A) \geq 0$\\
+\textbf{Additivity:} $\forall A_i$ disjoint, $P(\cup_i^\infty A_i) = \sum_i^\infty P(A_i)$\\
+
+
+
+\textbf{Independence:} $P(X_1=x_1,..,X_n=x_n) = P(x_1),...,P(x_n)$\\
+	Strong requirement, leaves us f.e. in Bayes with $P(X,Y) = P(X)P(Y|X) = P(X)P(Y)$\\
+
+$P(X=x, Y=y | Z=z) = P(X=x | Z=z) P(Y=y | Z=z)$\\
+
+	Dimensionality problem: a probability distribution $P(X_1=x_1,..,X_n = x_n)$ needs $2^n-1$ parameters to be specified.\\
+	Marginalizing to one distribution is also huge, its n-1 sums over all values.\\
+
+\textbf{Product Rule:} $P(A,B) = P(A|B)P(B) = P(B|A)P(A)$\\
+$P(X_1,..,X_n) = P(X_1)P(X_2|X_1)P(X_3|X_1X_2)..P(X_n|X_1..X_{n-1})$\\
+
+\textbf{Sum rule:} $P(X_{1:{i-1}}, X_{i+1:n}) = \sum_{x_i} P(X_{1:{i-1}}, x_i, X_{i+1:n})$\\
+	This is also called marginalization.
+	If we have a joint probability distributions with many individual distributions, we can reduce the number of individual distributions by marginalizing out.
+	The intuition behind this is based on the law of total probability. If we have two joint distributions. By summing up all outcomes of one of them, we have all events of this distribution covered in the marginalized distribution. This then only depends on the other variables.\\
+\end{comment}
+
+\textbf{Bayes Rule:} $P(X|Y) = \frac{P(X,Y)}{P(Y)} = \frac{P(X)P(Y|X)}{\sum_{X=x}P(X=x)P(Y|X=x)}$\\
+\begin{comment}
+	Given the prior and the likelihood, Bayes rule can be used to calculate the posterior. 
+	If we are looking for a probability distribution, we must also calculate the normalizer, by marginalising out all variables except Y, which can be done by knowing prior and likelihood, but can be intractable\\
+\end{comment}
+
+
+\subsection{Gaussian}
+$\mathcal{N}(x;\Sigma,\mu) = \frac{1}{\sqrt{(2\pi)^{n} |\Sigma|}} \exp(-\frac{1}{2}(x-\mu)^T \Sigma^{-1} (x-\mu))$, $O(n^2)$ var\\
+\textbf{Cov(x$_i$, x$_j$):} $\mathbb{E}[(x_i-\mu_i)(x_j-\mu_j)]$\\
+\begin{comment}
+	The Gaussian is very important due to the ease of manipulation and the fact, that all distributions are driven towards a gaussian as stated in the central limit theorem.\\
+	\textbf{Dimensionality:} For a usual distribution with n parameters, e.g. binary $P(X_1,..,X_n)$, we need $2^n-1$ variables. With a compositional Gaussian only $O(n^2)$.\\
+	\textbf{Marginalization:} The cost of marginalisation is also huge with standart (binary distributions), need to sum up all combinations of other variables $O(2^{n-1)})$.\\
+\end{comment}
+
+\textbf{Marginal:} $X_A = [X_{i_1},...,X_{i_k}] \sim \cN(\mu_A, \Sigma_{AA})$\\
+
+\textbf{Conditional:} $p(X_A | X_B = x_B) = \mathcal{N}(\mu_{A|B}, \Sigma_{A|B})$\\ 
+$\mu_{A|B} = \mu_A + \Sigma_{AB}\Sigma^{-1}_{BB}(x_B - \mu_B)$, $\Sigma_{A|B} = \Sigma_{AA} - \Sigma_{AB}\Sigma^{-1}_{BB} \Sigma_{BA}$\\
+
+\textbf{Times:} $M \in \mathcal{R}^{m\times d}, MX \sim \mathcal{N}(M\mu_X, M\Sigma_{XX}M^T)$\\
+\begin{comment}
+	If we have a scalar instead of M, it reduces to $X_1s \sim \mathcal{N}(s\mu_1, s^2\Sigma_1)$\\
+\end{comment}
+
+\textbf{Add:} $X_1 + X_2 \sim \mathcal{N}(\mu_1 + \mu_2, \Sigma_1 + \Sigma_2), X_1+s \sim \mathcal{N}(\mu_1 + s, \Sigma_1)$
+
+\section{Matrix manipulation}
+\textbf{$\nabla$(a$^T$w)} = $a$
+\textbf{$\nabla$(w$^T$Bw)} = $2Bw$\\
+$\sum(y_i - w^T x_i)^2 = (y-Xw)^T(y-Xw) = ||y-Xw||^2$\\
+\textbf{Woodbury:} $U(VU + I) = (UV+I)U$\\
+ $(A + xx^T)^{-1} = A^{-1} \frac{(A^{-1}x)(A^{-1}x)^T}{1 + x^TA^{-1}x}$\\
+
+

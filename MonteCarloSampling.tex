@@ -1,0 +1,100 @@
+\begin{comment}
+	\pagebreak
+\end{comment}
+
+\section{Monte Carlo Sampling}
+$p(y^* | x^*, x_{1:n}, y_{1:n}) = \int p(y^* | x^*, \theta) p(\theta | x_{1:n}, y_{1:n}) = \\
+\mathbb{E}_{\theta \sim p(.|X,y)}[p(y^*|x^*,\theta)]
+\approx \frac{1}{m}\Sigma^m_i p(y^*|x^*,\theta^{(i)}), \theta^{(i)} \sim p(\theta|X,y)$\\
+\textbf{LargeNums:} $\mathbb{E}_P[f(X)] \approx \frac{1}{N}\sum_i^N f(x_i)$ \textbf{Hoeffding:} f in $[0, C]$, 
+$P(|\mathbb{E}_P[f(X)] - \frac{1}{N}\sum_i^N f(x_i)| > \epsilon) \leq 2 \exp(-2N\epsilon^2 / C^2)$\\
+\begin{comment}
+	\textbf{Intuition:} Based on the law of large numbers, we can derive the required number of samples N to be in a certain probability bound.\\
+\end{comment}
+
+\textbf{Approx:} $\frac{1}{Z}Q(x) = P(x)$, MC seq. $X_{1:N}$ with stationary $P(x)$\\
+Prior $P(X_1)$, transitions $P(X_{t+1}|X_t)$ i.i.d of $t$ \\
+\begin{comment}
+	The Markov chain is a sequence of Random Variables, mostly the random variables are states in $\{1,..,M\}$.\\
+	The MC is stationary if the transition probabilities are independent of t, e.g. they don't change if t changes.\\
+\end{comment}
+
+\textbf{Ergodic:} Reach all states from everywhere in exactly t steps\\
+\begin{comment}
+	\textbf{Note:} It must be exactly t steps to reach every state from everywhere. 
+	\textbf{Example:} MC (1)-(2), whereas the state (2) can be reached from (1) after t=uneven steps, whereas it can be reached from (2) only after t=even steps.\\
+\end{comment}
+
+\textbf{Statnary:} $\lim_{\infty} P(X_N = x) = \pi(x)$, implied by$\uparrow$, $P(X_1)$ egal\\
+
+\textbf{Sample:} $x_1 \sim P(X_1), x_n \sim P(X_N | X_{N-1} = x_{N-1})$\\
+
+\textbf{Goal:} $\pi(x) = \frac{1}{Z} Q(x)$, need to specify $P(x|x')$\\
+
+\textbf{Balance:} $\frac{1}{Z}Q(x)P(x'|x) = \frac{1}{Z}Q(x')P(x|x') \Rightarrow \pi(x) = \frac{1}{Z}Q(x)$\\
+\begin{comment}
+Given unnormalized distribution Q(x), we want to design a Markov chain with stationary distribution $\pi$. We can ensure that the stationary distribution is correct if it satisfies the detailed balance equation.\\
+	It suffices to show that $P(X_t = x) = \frac{1}{Z}Q(x) \Rightarrow P(X_{t+1} = x) = \frac{1}{Z}Q(x)$.\\ 
+	Proof: $P(X_{t+1} = x) = \sum_{x'} P(X_{t+1} = x, X_t = x') \\
+	= \sum_{x'} P(X_{t+1} = x| X_t = x') P(X_t = x') \\
+	= \sum_{x'} P(X_{t+1} = x| X_t = x') \frac{1}{Z}Q(x')\\
+	= \sum_{x'} P(X_{t+1} = x'| X_t = x) \frac{1}{Z}Q(x)\\
+	= \frac{1}{Z}Q(x)$\\
+\end{comment}
+
+\subsection{Metropolis Hastings}
+\textbf{1) Proposal:} Given $X_t=x$, sample $x' \sim R(X' | X=x)$\\
+\textbf{2) Accept:} w/ probability $\alpha = \min (1, \frac{Q(x')R(x|x')}{Q(x)R(x'|x)})$\\
+\textbf{Theorem:} Stationary is $Z^{-1}Q(x)$\\
+\begin{comment}
+	The performance depends heavily on what we choose as proposal distribution R.\\
+\end{comment}
+
+\textbf{Gibbs:} $t..\infty: i\sim Uniform,$ update $x_i = P(X_i| x_{-i})$\\
+$P(X_i = x_i| x_{-i}) = \frac{1}{Z} Q(X_i = x_i, x_{-i}) = \frac{Q(x_{1:n})}{\sum_{x_i} Q(X_i=x_i, x_{-1})}$\\
+$\uparrow$ sat. balance equation, practical variant not. $P(X_i| x_{-i})$ eff.\\
+\begin{comment}
+	We are only updating one of the variables by conditioning on all the other variables.\\
+	This can be done efficiently, as the normalizer has to be computed over all $x_i$, which are limited in f.e. a categorical distribution.\\
+\end{comment}
+
+\textbf{LLN (Ergodic):} $lim_{N\rightarrow \infty} \frac{1}{N} \sum_i^N f(x_i) = \sum_{x \in D} \pi(x)f(x)$\\
+\begin{comment}
+By design of the Markov Chain, the samples depend on each other, so the law of large numbers and the complexity bounds do not apply.\\
+	Special case is when the Markov chain is Ergodic and the state space D is finite with stationary $\pi$.
+	This is also called the law of large numbers for Markov Chains.\\
+	This talks about if it converges to the correct thing, but unfortunately not how fast it converges.\\
+\end{comment}
+
+\textbf{Expectations:} $\mathbb{E}[f(X)] \approx \frac{1}{T-t_0} \sum_{\tau=t_0 +1}^T f(X^{(\tau)})$, $t_0$ burn-in\\
+\begin{comment}
+	The initial state is very crucial when it comes to time-to-convergence. Often the mode is determined heuristically, then started from there.\\
+	Establishing convergence rates is very difficult in general.\\
+\end{comment}
+
+\textbf{General RV:} $Q(x) = \frac{1}{Z}\exp(-f(x)))$, $f(x) > 0$\\
+$p(\theta| X,y) = \frac{1}{Z} p(\theta) p(y| X, \theta) = \frac{1}{Z} \exp(\text{-} [\text{-}\log p(\theta) - \log p(y|X,\theta)])$
+
+\textbf{Bay.Logistic Reg.:} $f(\theta) = \lambda||\theta||^2 \text{+} \sum log(1 \text{+} exp(- y_i \theta^T x_i))$\\
+
+\textbf{Hastings:} $\alpha = \min (1, \frac{R(x|x')}{R(x'|x)}\exp(f(x) - f(x')))$ $| \downarrow$ b.c. sym.\\
+$R(x'|x) = \cN(x';x;\tau I) \Rightarrow \alpha = \min \{ 1, \exp(f(x) - f(x')) \}$\\
+\begin{comment}
+	The R-fraction is 1, since Gaussians are symmetric.\\
+	$f(x') < f(x)$: we accept with probability 1 if the cost function is smaller at x'.\\
+	$f(x') > f(x)$: cost of new position is higher, still there is a possibility to go into this direction if not too high.\\
+	\textbf{Note:} The Algo could get stuck.\\
+\end{comment}
+
+$R(.|.) = \cN(x';x \text{-} \tau \nabla f(x);2\tau I)$, eval. $f(x)$ both steps\\
+\begin{comment}
+	MALA incorporates Langevin dynamics. We sample R in direction of the Mode of the energy function, this can help with the direction.\\
+	Gradient computation can be expensive, there is a version where stochastic gradients are used.\\
+\end{comment}
+
+
+
+
+
+
+
